@@ -4,6 +4,7 @@ import org.jsoup.Jsoup;
 import top.myjnxj.core.Spider;
 import top.myjnxj.core.model.Page;
 import top.myjnxj.core.model.Request;
+import top.myjnxj.core.model.Task;
 import top.myjnxj.core.utils.HttpClientUtil;
 
 import java.io.IOException;
@@ -16,10 +17,10 @@ import java.io.IOException;
  * @Version 1.0.0
  **/
 public class DefaultDownloader implements Downloader {
-    public Page download(Request request, Spider spider) throws IOException {
+    public Page download(Request request, Task task) throws IOException {
         Page page=new Page();
         page.setRequest(request);
-        page.setContent(HttpClientUtil.get(request));
+        page.setContent(HttpClientUtil.get(request,task));
         page.setDocument(Jsoup.parse(page.getContent()));
         return page;
     }

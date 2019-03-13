@@ -4,10 +4,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import top.myjnxj.core.downloader.DefaultDownloader;
 import top.myjnxj.core.downloader.Downloader;
-import top.myjnxj.core.model.CountableThreadPool;
-import top.myjnxj.core.model.Page;
-import top.myjnxj.core.model.Request;
-import top.myjnxj.core.model.Task;
+import top.myjnxj.core.model.*;
 import top.myjnxj.core.processor.PageProcessor;
 import top.myjnxj.core.scheduler.QueueScheduler;
 import top.myjnxj.core.scheduler.Scheduler;
@@ -33,7 +30,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class Spider implements Runnable, Task {
     private Downloader downloader;
     private PageProcessor pageProcessor;
-    protected List<Request> startRequests;
+    private List<Request> startRequests;
     //队列,存储被爬取的队列
     private Scheduler scheduler = new QueueScheduler();
     private int threadNum = 1;
@@ -49,9 +46,12 @@ public class Spider implements Runnable, Task {
     private Condition newUrlCondition = newUrlLock.newCondition();
     private String uuid;
     private AtomicInteger pageCount = new AtomicInteger(0);
+    //存储请求的额外信息，如headers
+    private Site site;
 
     public Spider(PageProcessor pageProcessor) {
         this.pageProcessor = pageProcessor;
+        this.site=pageProcessor.getSite();
     }
 
     public static Spider create(PageProcessor pageProcessor) {
@@ -63,8 +63,8 @@ public class Spider implements Runnable, Task {
         Page page = downloader.download(request, this);
         //链接提取和页面分析
         pageProcessor.process(page);
-        for (Request targetRequest:page.getTargetRequests()){
-            scheduler.push(targetRequest,this);
+        for (Request targetRequest : page.getTargetRequests()) {
+            scheduler.push(targetRequest, this);
         }
     }
 
@@ -120,7 +120,7 @@ public class Spider implements Runnable, Task {
     }
 
     private void onSucess(Request request) {
-        log.info("Spider request number {} : {} has success!", pageCount.get(),request);
+        log.info("Spider request number {} : {} has success!", pageCount.get(), request);
     }
 
     private void singalNewUrl() {
@@ -194,5 +194,9 @@ public class Spider implements Runnable, Task {
             this.uuid = UUID.randomUUID().toString();
         }
         return this.uuid;
+    }
+
+    public Site getSite() {
+        return this.site;
     }
 }
